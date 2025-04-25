@@ -11,7 +11,9 @@ let package = Package(
             name: "ABCWaas",
             targets: ["ABCWaas"]),
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/ahnlabio/abc-mpc-ios-lib", from: "v0.1.0")
+    ],
     targets: [
         .target(
             name: "ABCWaas",
