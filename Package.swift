@@ -12,7 +12,7 @@ let package = Package(
             targets: ["ABCWaas"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/ahnlabio/abc-mpc-ios-lib", from: "v0.1.0")
+        .package(url: "https://github.com/ahnlabio/abc-mpc-ios-lib", from: "0.1.1")
     ],
     targets: [
         .target(
