@@ -17,7 +17,10 @@ let package = Package(
     targets: [
         .target(
             name: "ABCWaas",
-            dependencies: ["ABCWaasCore"],
+            dependencies: [
+                "ABCWaasCore",
+                .product(name: "ABCMpc", package: "abc-mpc-ios-lib", condition: .none)
+            ],
             path: "Sources/ABCWaas"),
         .binaryTarget(
             name: "ABCWaasCore",
