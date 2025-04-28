@@ -36,12 +36,12 @@ public class WaasHelper {
             if case .failure(let error) = userKeyResult {
                 return .failure(HelperError.waasError(error))
             }
-            return .failure(HelperError.unknownError(message: "Wallet data fetch failed"))
+            return .failure(HelperError.unknownError("Wallet data fetch failed"))
         }
         
         let curveKeyResult = checkForDuplicateKey(walletKeyResponse: walletKeyResponse, curve: curve)
         if case .failure(let error) = curveKeyResult {
-            return .failure(HelperError.waasError(error))
+            return .failure(error)
         }
 
         // 2. 키 ID 생성
@@ -50,19 +50,19 @@ public class WaasHelper {
             if case .failure(let error) = keyIdResult {
                 return .failure(HelperError.mpcError(error))
             }
-            return .failure(HelperError.unknownError(message: "Key ID generation failed"))
+            return .failure(HelperError.unknownError("Key ID generation failed"))
         }
         
         // 3. 지갑 토큰 가져오기
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyIdResponse.result) else {
-            return .failure(HelperError.unknownError(message: "Wallet Token Fetch Failed"))
+            return .failure(HelperError.unknownError("Wallet Token Fetch Failed"))
         }
         
         guard case .success(let walletTokenResponse) = tokenResult else {
             if case .failure(let error) = tokenResult {
                 return .failure(HelperError.waasError(error))
             }
-            return .failure(HelperError.unknownError(message: "Wallet Token Fetch Failed"))
+            return .failure(HelperError.unknownError("Wallet Token Fetch Failed"))
         }
         
         // 4. 쉐어 생성
@@ -79,7 +79,7 @@ public class WaasHelper {
             if case .failure(let error) = generateShareResult {
                 return .failure(HelperError.mpcError(error))
             }
-            return .failure(HelperError.unknownError(message: "Key Share Generation Failed"))
+            return .failure(HelperError.unknownError("Key Share Generation Failed"))
         }
         
         // 5. 공개 키 생성
@@ -94,7 +94,7 @@ public class WaasHelper {
             if case .failure(let error) = publicKeyResult {
                 return .failure(HelperError.mpcError(error))
             }
-            return .failure(HelperError.unknownError(message: "Public Key Generation Failed"))
+            return .failure(HelperError.unknownError("Public Key Generation Failed"))
         }
         
         // 6. 지갑 키 등록
@@ -109,7 +109,7 @@ public class WaasHelper {
             if case .failure(let error) = postWalletResult {
                 return .failure(HelperError.waasError(error))
             }
-            return .failure(HelperError.unknownError(message: "Wallet Key Registration Failed"))
+            return .failure(HelperError.unknownError("Wallet Key Registration Failed"))
         }
         
         // 7. 성공 처리
@@ -123,14 +123,16 @@ public class WaasHelper {
             if case .failure(let error) = userKeyResult {
                 return .failure(HelperError.waasError(error))
             }
-            return .failure(HelperError.unknownError(message: "Wallet data fetch failed"))
+            return .failure(HelperError.unknownError("Wallet data fetch failed"))
         }
         
         var foundMatchingKey = false
+        var source_key_id: String? = nil
         for key in walletKeyResponse {
-            if key.curve == curve && key.id == source_key_id {
+            if key.curve == curve && key.id != nil {
                 // 일치하는 키를 찾은 경우
                 foundMatchingKey = true
+                source_key_id = key.id
                 break  // 일치하는 키를 찾았으므로 루프 종료
             }
         }
@@ -142,28 +144,28 @@ public class WaasHelper {
         
         let curveKeyResult = checkForRequiredKey(walletKeyResponse: walletKeyResponse, curve: curve)
         if case .failure(let error) = curveKeyResult {
-            return .failure(HelperError.waasError(error))
+            return .failure(error)
         }
         
         // 2. 키 ID 생성
         let keyIdResult = await generate_key_id()
         guard case .success(let keyIdResponse) = keyIdResult else {
-            if case .failure(let HelperError.mpcError(error)) = keyIdResult {
-                return .failure(error)
+            if case .failure(let error) = keyIdResult {
+                return .failure(HelperError.mpcError(error))
             }
-            return .failure(HelperError.unknownError(message: "Key ID generation failed"))
+            return .failure(HelperError.unknownError("Key ID generation failed"))
         }
         
         // 3. 지갑 토큰 가져오기
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyIdResponse.result) else {
-            return .failure(HelperError.unknownError(message: "Wallet Token Fetch Failed"))
+            return .failure(HelperError.unknownError("Wallet Token Fetch Failed"))
         }
         
         guard case .success(let walletTokenResponse) = tokenResult else {
             if case .failure(let error) = tokenResult {
                 return .failure(HelperError.waasError(error))
             }
-            return .failure(HelperError.unknownError(message: "Wallet Token Fetch Failed"))
+            return .failure(HelperError.unknownError("Wallet Token Fetch Failed"))
         }
         
         // 4. 쉐어 생성
@@ -181,7 +183,7 @@ public class WaasHelper {
             if case .failure(let error) = reoverShareResult {
                 return .failure(HelperError.mpcError(error))
             }
-            return .failure(HelperError.unknownError(message: "Key Share Recovery Failed"))
+            return .failure(HelperError.unknownError("Key Share Recovery Failed"))
         }
         
         // 5. 공개 키 생성
@@ -196,7 +198,7 @@ public class WaasHelper {
             if case .failure(let error) = publicKeyResult {
                 return .failure(HelperError.mpcError(error))
             }
-            return .failure(HelperError.unknownError(message: "Public Key Generation Failed"))
+            return .failure(HelperError.unknownError("Public Key Generation Failed"))
         }
         
         // 6. 지갑 키 등록
@@ -211,17 +213,17 @@ public class WaasHelper {
             if case .failure(let error) = postWalletResult {
                 return .failure(HelperError.waasError(error))
             }
-            return .failure(HelperError.unknownError(message: "Wallet Key Registration Failed"))
+            return .failure(HelperError.unknownError("Wallet Key Registration Failed"))
         }
         
         // 7. 성공 처리
         return .success(recoverShareResponse)
     }
 
-    public func sign(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, curve: String, message: String) async -> Result<RecoverShareResponse, HelperError> {
+    public func sign(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, curve: String, message: String) async -> Result<SignResponse, HelperError> {
         // 1. 지갑 토큰 가져오기
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
-            return .failure(HelperError.unknownError(message: "Wallet Data Fetch Failed"))
+            return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
         }
         
         guard case .success(let walletTokenResponse) = tokenResult else {
@@ -237,7 +239,7 @@ public class WaasHelper {
             if case .failure(let error) = signResult {
                 return .failure(HelperError.mpcError(error))
             }
-            return .failure(HelperError.unknownError(message: "Message Signing Failed"))
+            return .failure(HelperError.unknownError("Message Signing Failed"))
         }
         
         return .success(signResponse)
@@ -249,7 +251,7 @@ public class WaasHelper {
             if case .failure(let error) = result {
                 return .failure(HelperError.mpcError(error))
             }
-            return .failure(HelperError.unknownError(message: "Password Validation Failed"))
+            return .failure(HelperError.unknownError("Password Validation Failed"))
         }
         
         return .success(response)
@@ -261,7 +263,7 @@ public class WaasHelper {
             if case .failure(let error) = result {
                 return .failure(HelperError.mpcError(error))
             }
-            return .failure(HelperError.unknownError(message: "Share Validation Failed"))
+            return .failure(HelperError.unknownError("Share Validation Failed"))
         }
         
         return .success(response)
