@@ -127,9 +127,9 @@ public class WaasHelper {
         }
         
         var foundMatchingKey = false
-        var source_key_id: String? = nil
+        var source_key_id: String = ""
         for key in walletKeyResponse {
-            if key.curve == curve && key.id != nil {
+            if key.curve == curve {
                 // 일치하는 키를 찾은 경우
                 foundMatchingKey = true
                 source_key_id = key.id
@@ -139,7 +139,7 @@ public class WaasHelper {
         
         // 일치하는 키를 찾지 못한 경우
         if !foundMatchingKey {
-            return .failure(HelperError.unknownErrormessage: "No key found with the specified curve and key_id"))
+            return .failure(HelperError.unknownError("No key found with the specified curve and key_id"))
         }
         
         let curveKeyResult = checkForRequiredKey(walletKeyResponse: walletKeyResponse, curve: curve)
@@ -230,7 +230,7 @@ public class WaasHelper {
             if case .failure(let error) = tokenResult {
                 return .failure(HelperError.waasError(error))
             }
-            return .failure(HelperError.unknownError(message: "Wallet Data Fetch Failed"))
+            return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
         }
         
         // 2. 서명
