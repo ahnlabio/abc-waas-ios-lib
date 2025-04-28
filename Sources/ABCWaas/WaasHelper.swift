@@ -23,7 +23,7 @@ public class WaasHelper {
     private var node1BaseURL: String
     private var node2BaseURL: String
 
-    init(waasClient: WaasClient, node1BaseURL: String, node2BaseURL: String) {
+    public init(waasClient: WaasClient, node1BaseURL: String, node2BaseURL: String) {
         self.waasClient = waasClient
         self.node1BaseURL = node1BaseURL
         self.node2BaseURL = node2BaseURL
