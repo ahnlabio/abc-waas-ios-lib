@@ -1,10 +1,9 @@
-
+import ABCMpc
 
 public enum HelperError: Error {
     case waasError(WaasError)
     case mpcError(MpcError)
     case unknownError(String)
-    case 
 
     public var description: String {
         switch self {
