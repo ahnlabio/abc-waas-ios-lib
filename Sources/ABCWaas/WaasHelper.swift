@@ -20,8 +20,8 @@ public enum HelperError: Error {
 public class WaasHelper {
     private var waasClient: WaasClient?
 
-    private var node1BaseURL: String?
-    private var node2BaseURL: String?
+    private var node1BaseURL: String
+    private var node2BaseURL: String
 
     init(waasClient: WaasClient, node1BaseURL: String, node2BaseURL: String) {
         self.waasClient = waasClient
@@ -34,21 +34,21 @@ public class WaasHelper {
         let userKeyResult = await waasClient?.getV3WalletKey(accessToken: accessToken)
         guard case .success(let walletKeyResponse) = userKeyResult else {
             if case .failure(let error) = userKeyResult {
-                return .failure(error)
+                return .failure(HelperError.waasError(error))
             }
             return .failure(HelperError.unknownError(message: "Wallet data fetch failed"))
         }
         
         let curveKeyResult = checkForDuplicateKey(walletKeyResponse: walletKeyResponse, curve: curve)
         if case .failure(let error) = curveKeyResult {
-            return .failure(error)
+            return .failure(HelperError.waasError(error))
         }
 
         // 2. 키 ID 생성
         let keyIdResult = await generate_key_id()
         guard case .success(let keyIdResponse) = keyIdResult else {
             if case .failure(let error) = keyIdResult {
-                return .failure(error)
+                return .failure(HelperError.mpcError(error))
             }
             return .failure(HelperError.unknownError(message: "Key ID generation failed"))
         }
@@ -60,7 +60,7 @@ public class WaasHelper {
         
         guard case .success(let walletTokenResponse) = tokenResult else {
             if case .failure(let error) = tokenResult {
-                return .failure(error)
+                return .failure(HelperError.waasError(error))
             }
             return .failure(HelperError.unknownError(message: "Wallet Token Fetch Failed"))
         }
@@ -77,7 +77,7 @@ public class WaasHelper {
         
         guard case .success(let generateShareResponse) = generateShareResult else {
             if case .failure(let error) = generateShareResult {
-                return .failure(error)
+                return .failure(HelperError.mpcError(error))
             }
             return .failure(HelperError.unknownError(message: "Key Share Generation Failed"))
         }
@@ -92,7 +92,7 @@ public class WaasHelper {
         
         guard case .success(let publicKeyResponse) = publicKeyResult else {
             if case .failure(let error) = publicKeyResult {
-                return .failure(error)
+                return .failure(HelperError.mpcError(error))
             }
             return .failure(HelperError.unknownError(message: "Public Key Generation Failed"))
         }
@@ -107,7 +107,7 @@ public class WaasHelper {
         
         guard case .success(let walletKey) = postWalletResult else {
             if case .failure(let error) = postWalletResult {
-                return .failure(error)
+                return .failure(HelperError.waasError(error))
             }
             return .failure(HelperError.unknownError(message: "Wallet Key Registration Failed"))
         }
@@ -121,7 +121,7 @@ public class WaasHelper {
         let userKeyResult = await waasClient?.getV3WalletKey(accessToken: accessToken)
         guard case .success(let walletKeyResponse) = userKeyResult else {
             if case .failure(let error) = userKeyResult {
-                return .failure(error)
+                return .failure(HelperError.waasError(error))
             }
             return .failure(HelperError.unknownError(message: "Wallet data fetch failed"))
         }
@@ -142,13 +142,13 @@ public class WaasHelper {
         
         let curveKeyResult = checkForRequiredKey(walletKeyResponse: walletKeyResponse, curve: curve)
         if case .failure(let error) = curveKeyResult {
-            return .failure(error)
+            return .failure(HelperError.waasError(error))
         }
         
         // 2. 키 ID 생성
         let keyIdResult = await generate_key_id()
         guard case .success(let keyIdResponse) = keyIdResult else {
-            if case .failure(let error) = keyIdResult {
+            if case .failure(let HelperError.mpcError(error)) = keyIdResult {
                 return .failure(error)
             }
             return .failure(HelperError.unknownError(message: "Key ID generation failed"))
@@ -161,7 +161,7 @@ public class WaasHelper {
         
         guard case .success(let walletTokenResponse) = tokenResult else {
             if case .failure(let error) = tokenResult {
-                return .failure(error)
+                return .failure(HelperError.waasError(error))
             }
             return .failure(HelperError.unknownError(message: "Wallet Token Fetch Failed"))
         }
@@ -179,7 +179,7 @@ public class WaasHelper {
         
         guard case .success(let recoverShareResponse) = reoverShareResult else {
             if case .failure(let error) = reoverShareResult {
-                return .failure(error)
+                return .failure(HelperError.mpcError(error))
             }
             return .failure(HelperError.unknownError(message: "Key Share Recovery Failed"))
         }
@@ -194,7 +194,7 @@ public class WaasHelper {
         
         guard case .success(let publicKeyResponse) = publicKeyResult else {
             if case .failure(let error) = publicKeyResult {
-                return .failure(error)
+                return .failure(HelperError.mpcError(error))
             }
             return .failure(HelperError.unknownError(message: "Public Key Generation Failed"))
         }
@@ -209,7 +209,7 @@ public class WaasHelper {
         
         guard case .success(let walletKey) = postWalletResult else {
             if case .failure(let error) = postWalletResult {
-                return .failure(error)
+                return .failure(HelperError.waasError(error))
             }
             return .failure(HelperError.unknownError(message: "Wallet Key Registration Failed"))
         }
@@ -221,12 +221,12 @@ public class WaasHelper {
     public func sign(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, curve: String, message: String) async -> Result<RecoverShareResponse, HelperError> {
         // 1. 지갑 토큰 가져오기
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
-            return .failure(AppError.init(message: "Wallet Data Fetch Failed"))
+            return .failure(HelperError.unknownError(message: "Wallet Data Fetch Failed"))
         }
         
         guard case .success(let walletTokenResponse) = tokenResult else {
             if case .failure(let error) = tokenResult {
-                return .failure(error)
+                return .failure(HelperError.waasError(error))
             }
             return .failure(HelperError.unknownError(message: "Wallet Data Fetch Failed"))
         }
@@ -235,7 +235,7 @@ public class WaasHelper {
         let signResult = await ABCMpc.sign(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, message: message)
         guard case .success(let signResponse) = signResult else {
             if case .failure(let error) = signResult {
-                return .failure(error)
+                return .failure(HelperError.mpcError(error))
             }
             return .failure(HelperError.unknownError(message: "Message Signing Failed"))
         }
@@ -247,7 +247,7 @@ public class WaasHelper {
         let result = await ABCMpc.validate_password_and_secret_store(password: password, secret_store:secretStore)
         guard case .success(let response) = result else {
             if case .failure(let error) = result {
-                return .failure(error)
+                return .failure(HelperError.mpcError(error))
             }
             return .failure(HelperError.unknownError(message: "Password Validation Failed"))
         }
@@ -259,7 +259,7 @@ public class WaasHelper {
         let result = await ABCMpc.validate_share_and_secret_store(encrypted_share: encryptedShare,secret_store: secretStore)
         guard case .success(let response) = result else {
             if case .failure(let error) = result {
-                return .failure(error)
+                return .failure(HelperError.mpcError(error))
             }
             return .failure(HelperError.unknownError(message: "Share Validation Failed"))
         }
