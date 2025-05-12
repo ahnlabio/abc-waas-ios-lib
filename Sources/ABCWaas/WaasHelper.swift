@@ -1,4 +1,5 @@
 import ABCMpc
+import Foundation
 
 public enum HelperError: Error {
     case waasError(WaasError)
@@ -294,4 +295,65 @@ public class WaasHelper {
         // 존재하는 경우 성공 반환
         return .success(())
     }
+
+    public func solanaWalletAccountInfo(accessToken: String, address: String, network: String) async -> Result<Data, HelperError> {
+        let result = await waasClient?.postV2SolanaWalletAccountInfo(accessToken: accessToken, address: address, network: network)
+        guard case .success(let response) = result else {
+            if case .failure(let error) = result {
+                return .failure(HelperError.waasError(error))
+            }
+            return .failure(HelperError.unknownError("Failed to get wallet account info"))
+        }
+        return .success(response)
+    }
+
+    public func solanaWalletBalance(accessToken: String, address: String, network: String) async -> Result<Data, HelperError> {
+        let result = await waasClient?.postV2SolanaWalletBalance(accessToken: accessToken, address: address, network: network)
+        guard case .success(let response) = result else {
+            if case .failure(let error) = result {
+                return .failure(HelperError.waasError(error))
+            }
+            return .failure(HelperError.unknownError("Failed to get wallet balance"))
+        }
+        return .success(response)
+    }
+
+    public func transferSolana(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, curve: String, fromAddress: String, toAddress: String, feePayerAddress: String?, amount: String, network: String) async -> Result<Data, HelperError> {
+
+        let feePayerAddressValue = feePayerAddress ?? ""
+
+        let result = await waasClient?.postV2SolanaTxGenerateTransferSol(accessToken: accessToken, fromAddress: fromAddress, toAddress: toAddress, feePayerAddress: feePayerAddressValue, amount: amount, network: network)
+        guard case .success(let generateTransferSolResponse) = result else {
+            if case .failure(let error) = result {
+                return .failure(HelperError.waasError(error))
+            }
+            return .failure(HelperError.unknownError("Failed to generate transfer sol"))
+        }
+
+        var serializedTx: String? = nil
+        if let json = try? JSONSerialization.jsonObject(with: generateTransferSolResponse) as? [String: Any], let dataDict = json["data"] as? [String: Any], let serializedTxInner = dataDict["serialized_tx"] as? String {
+            // serializedTx 사용
+            serializedTx = serializedTxInner
+        } else {
+            return .failure(HelperError.unknownError("serialized_tx not found"))
+        }   
+
+        guard let serializedTx = serializedTx else {
+            return .failure(HelperError.unknownError("serialized_tx not found"))
+        }
+
+        let signResult = await sign(accessToken: accessToken, keyId: keyId, encryptedShare: encryptedShare, secretStore: secretStore, curve: curve, message: serializedTx)
+        guard case .success(let signResponse) = signResult else {
+            return .failure(HelperError.unknownError("Failed to sign transaction"))
+        }
+
+        let sendTransactionResult = await waasClient?.postV2SolanaTxSendTransaction(accessToken: accessToken, serializedTx: serializedTx, signatures: [signResponse.signature], network: network)
+        guard case .success(let sendTransactionResponse) = sendTransactionResult else {
+            return .failure(HelperError.unknownError("Failed to send transaction"))
+        }
+
+        return .success(sendTransactionResponse)
+
+    }
+    
 }
