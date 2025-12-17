@@ -88,6 +88,123 @@ extern "C"
         const char *signatures,
         const char *network);
 
+    // ====== XRP ======
+    extern char *waas_client_post_v2_xrp_account(
+        waas_client_t client,
+        const char *access_token,
+        const char *public_key,
+        const char *network);
+
+    // XRP Balance
+    extern char *waas_client_post_v2_xrp_balance(
+        waas_client_t client,
+        const char *access_token,
+        const char *account,
+        const char *network);
+
+    // XRP Server Info
+    extern char *waas_client_post_v2_xrp_server_info(
+        waas_client_t client,
+        const char *access_token,
+        const char *network);
+
+    // XRP Account Info
+    extern char *waas_client_post_v2_xrp_account_info(
+        waas_client_t client,
+        const char *access_token,
+        const char *account,
+        const char *network);
+
+    // XRP Transfer (destination_tag는 NULL이면 생략)
+    extern char *waas_client_post_v2_xrp_transfer(
+        waas_client_t client,
+        const char *access_token,
+        const char *account,
+        const char *amount,
+        const char *destination,
+        const char *destination_tag, // NULL이면 None
+        const char *fee,
+        const char *public_key,
+        const char *network);
+
+    // XRP Send Transaction
+    extern char *waas_client_post_v2_xrp_send_transaction(
+        waas_client_t client,
+        const char *access_token,
+        const char *public_key,
+        const char *serialized_tx,
+        const char *signature,
+        const char *network);
+
+    // XRP Fee
+    extern char *waas_client_post_v2_xrp_fee(
+        waas_client_t client,
+        const char *access_token,
+        const char *network);
+
+    // XRP Transaction
+    extern char *waas_client_post_v2_xrp_transaction(
+        waas_client_t client,
+        const char *access_token,
+        const char *tx_hash,
+        const char *network);
+
+    // XRP Trustline
+    extern char *waas_client_post_v2_xrp_trustline(
+        waas_client_t client,
+        const char *access_token,
+        const char *account,
+        const char *currency,
+        const char *fee,
+        const char *issuer,
+        const char *limit,
+        const char *public_key,
+        const char *network);
+
+    // XRP Trustline Status
+    extern char *waas_client_post_v2_xrp_trustline_status(
+        waas_client_t client,
+        const char *access_token,
+        const char *account,
+        const char *currency,
+        const char *issuer,
+        const char *network);
+
+    // XRP FT Balance
+    extern char *waas_client_post_v2_xrp_ft_balance(
+        waas_client_t client,
+        const char *access_token,
+        const char *account,
+        const char *issuer,
+        const char *network);
+
+    // XRP FT Transfer Estimate (destination_tag는 NULL이면 생략)
+    extern char *waas_client_post_v2_xrp_ft_transfer_estimate(
+        waas_client_t client,
+        const char *access_token,
+        const char *account,
+        const char *amount,
+        const char *currency,
+        const char *destination,
+        const char *destination_tag, // NULL이면 None
+        const char *issuer,
+        const char *public_key,
+        const char *network);
+
+    // XRP FT Transfer (destination_tag는 NULL이면 생략)
+    extern char *waas_client_post_v2_xrp_ft_transfer(
+        waas_client_t client,
+        const char *access_token,
+        const char *account,
+        const char *amount,
+        const char *currency,
+        const char *destination,
+        const char *destination_tag, // NULL이면 None
+        const char *fee,
+        const char *issuer,
+        const char *public_key,
+        const char *network);
+
     extern void waas_client_free(waas_client_t client);
 
     extern void waas_string_free(char *s);

@@ -34,6 +34,8 @@ public struct Address: Codable {
     public let evm: String?
     public let btc: String?
     public let aptos: String?
+    public let tron: String?
+    public let xrp: String?
 }
 
 // MARK: - WalletUserResponse
