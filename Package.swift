@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "ABCWaas",
     platforms: [
-        .iOS(.v16)
+        .iOS(.v13)
     ],
     products: [
         .library(
@@ -12,7 +12,7 @@ let package = Package(
             targets: ["ABCWaas"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/ahnlabio/abc-mpc-ios-lib", from: "0.1.4")
+        .package(url: "https://github.com/ahnlabio/abc-mpc-ios-lib", from: "0.1.5")
     ],
     targets: [
         .target(
