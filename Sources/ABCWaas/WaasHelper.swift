@@ -226,14 +226,14 @@ public class WaasHelper {
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
             return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
         }
-        
+
         guard case .success(let walletTokenResponse) = tokenResult else {
             if case .failure(let error) = tokenResult {
                 return .failure(HelperError.waasError(error))
             }
             return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
         }
-        
+
         // 2. 서명
         let signResult = await ABCMpc.sign(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, message: message)
         guard case .success(let signResponse) = signResult else {
@@ -242,8 +242,95 @@ public class WaasHelper {
             }
             return .failure(HelperError.unknownError("Message Signing Failed"))
         }
-        
+
         return .success(signResponse)
+    }
+
+    public func signMta(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, message: String) async -> Result<SignResponse, HelperError> {
+        // 1. 지갑 토큰 가져오기
+        guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
+            return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
+        }
+
+        guard case .success(let walletTokenResponse) = tokenResult else {
+            if case .failure(let error) = tokenResult {
+                return .failure(HelperError.waasError(error))
+            }
+            return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
+        }
+
+        // 2. MTA 서명
+        let signResult = await ABCMpc.sign_mta(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message)
+        guard case .success(let signResponse) = signResult else {
+            if case .failure(let error) = signResult {
+                return .failure(HelperError.mpcError(error))
+            }
+            return .failure(HelperError.unknownError("MTA Message Signing Failed"))
+        }
+
+        return .success(signResponse)
+    }
+
+    public func signMtaDerived(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, message: String, chainCode: String, path: String) async -> Result<SignResponse, HelperError> {
+        // 1. 지갑 토큰 가져오기
+        guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
+            return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
+        }
+
+        guard case .success(let walletTokenResponse) = tokenResult else {
+            if case .failure(let error) = tokenResult {
+                return .failure(HelperError.waasError(error))
+            }
+            return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
+        }
+
+        // 2. MTA 파생 서명
+        let signResult = await ABCMpc.sign_mta_derived(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message, chain_code: chainCode, path: path)
+        guard case .success(let signResponse) = signResult else {
+            if case .failure(let error) = signResult {
+                return .failure(HelperError.mpcError(error))
+            }
+            return .failure(HelperError.unknownError("MTA Derived Message Signing Failed"))
+        }
+
+        return .success(signResponse)
+    }
+
+    public func signWithChainCode(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, curve: String, message: String, chainCode: String, path: String) async -> Result<SignResponse, HelperError> {
+        // 1. 지갑 토큰 가져오기
+        guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
+            return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
+        }
+
+        guard case .success(let walletTokenResponse) = tokenResult else {
+            if case .failure(let error) = tokenResult {
+                return .failure(HelperError.waasError(error))
+            }
+            return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
+        }
+
+        // 2. 체인코드 파생 서명
+        let signResult = await ABCMpc.sign_with_chain_code(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, message: message, chain_code: chainCode, path: path)
+        guard case .success(let signResponse) = signResult else {
+            if case .failure(let error) = signResult {
+                return .failure(HelperError.mpcError(error))
+            }
+            return .failure(HelperError.unknownError("ChainCode Derived Message Signing Failed"))
+        }
+
+        return .success(signResponse)
+    }
+
+    public func publicKeyWithChainCode(keyId: String, encryptedShare: String, secretStore: String, curve: String, chainCode: String, path: String) async -> Result<PublicKeyResponse, HelperError> {
+        let publicKeyResult = await ABCMpc.public_key_with_chain_code(key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, chain_code: chainCode, path: path)
+        guard case .success(let publicKeyResponse) = publicKeyResult else {
+            if case .failure(let error) = publicKeyResult {
+                return .failure(HelperError.mpcError(error))
+            }
+            return .failure(HelperError.unknownError("Public Key With ChainCode Generation Failed"))
+        }
+
+        return .success(publicKeyResponse)
     }
 
     public func validatePassword(password: String, secretStore: String) async -> Result<ValidatePasswordAndSecretStoreResponse, HelperError> {
