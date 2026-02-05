@@ -88,7 +88,8 @@ public class WaasHelper {
             key_id: generateShareResponse.keyId,
             encrypted_share: generateShareResponse.encryptedShare,
             secret_store: generateShareResponse.secretStore,
-            curve: generateShareResponse.curve
+            curve: generateShareResponse.curve,
+            password: password
         )
         
         guard case .success(let publicKeyResponse) = publicKeyResult else {
@@ -192,7 +193,8 @@ public class WaasHelper {
             key_id: recoverShareResponse.keyId,
             encrypted_share: recoverShareResponse.encryptedShare,
             secret_store: recoverShareResponse.secretStore,
-            curve: recoverShareResponse.curve
+            curve: recoverShareResponse.curve,
+            password: password
         )
         
         guard case .success(let publicKeyResponse) = publicKeyResult else {
@@ -221,7 +223,7 @@ public class WaasHelper {
         return .success(recoverShareResponse)
     }
 
-    public func sign(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, curve: String, message: String) async -> Result<SignResponse, HelperError> {
+    public func sign(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, curve: String, message: String, password: String) async -> Result<SignResponse, HelperError> {
         // 1. 지갑 토큰 가져오기
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
             return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
@@ -235,7 +237,7 @@ public class WaasHelper {
         }
 
         // 2. 서명
-        let signResult = await ABCMpc.sign(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, message: message)
+        let signResult = await ABCMpc.sign(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, message: message, password: password)
         guard case .success(let signResponse) = signResult else {
             if case .failure(let error) = signResult {
                 return .failure(HelperError.mpcError(error))
@@ -246,7 +248,7 @@ public class WaasHelper {
         return .success(signResponse)
     }
 
-    public func signMta(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, message: String) async -> Result<SignResponse, HelperError> {
+    public func signMta(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, message: String, password: String) async -> Result<SignResponse, HelperError> {
         // 1. 지갑 토큰 가져오기
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
             return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
@@ -260,7 +262,7 @@ public class WaasHelper {
         }
 
         // 2. MTA 서명
-        let signResult = await ABCMpc.sign_mta(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message)
+        let signResult = await ABCMpc.sign_mta(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message, password: password)
         guard case .success(let signResponse) = signResult else {
             if case .failure(let error) = signResult {
                 return .failure(HelperError.mpcError(error))
@@ -271,7 +273,7 @@ public class WaasHelper {
         return .success(signResponse)
     }
 
-    public func signMtaDerived(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, message: String, chainCode: String, path: String) async -> Result<SignResponse, HelperError> {
+    public func signMtaDerived(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, message: String, chainCode: String, path: String, password: String) async -> Result<SignResponse, HelperError> {
         // 1. 지갑 토큰 가져오기
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
             return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
@@ -285,7 +287,7 @@ public class WaasHelper {
         }
 
         // 2. MTA 파생 서명
-        let signResult = await ABCMpc.sign_mta_derived(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message, chain_code: chainCode, path: path)
+        let signResult = await ABCMpc.sign_mta_derived(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message, chain_code: chainCode, path: path, password: password)
         guard case .success(let signResponse) = signResult else {
             if case .failure(let error) = signResult {
                 return .failure(HelperError.mpcError(error))
@@ -296,7 +298,7 @@ public class WaasHelper {
         return .success(signResponse)
     }
 
-    public func signWithChainCode(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, curve: String, message: String, chainCode: String, path: String) async -> Result<SignResponse, HelperError> {
+    public func signWithChainCode(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, curve: String, message: String, chainCode: String, path: String, password: String) async -> Result<SignResponse, HelperError> {
         // 1. 지갑 토큰 가져오기
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
             return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
@@ -310,7 +312,7 @@ public class WaasHelper {
         }
 
         // 2. 체인코드 파생 서명
-        let signResult = await ABCMpc.sign_with_chain_code(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, message: message, chain_code: chainCode, path: path)
+        let signResult = await ABCMpc.sign_with_chain_code(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, message: message, chain_code: chainCode, path: path, password: password)
         guard case .success(let signResponse) = signResult else {
             if case .failure(let error) = signResult {
                 return .failure(HelperError.mpcError(error))
@@ -321,8 +323,8 @@ public class WaasHelper {
         return .success(signResponse)
     }
 
-    public func publicKeyWithChainCode(keyId: String, encryptedShare: String, secretStore: String, curve: String, chainCode: String, path: String) async -> Result<PublicKeyResponse, HelperError> {
-        let publicKeyResult = await ABCMpc.public_key_with_chain_code(key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, chain_code: chainCode, path: path)
+    public func publicKeyWithChainCode(keyId: String, encryptedShare: String, secretStore: String, curve: String, chainCode: String, path: String, password: String) async -> Result<PublicKeyResponse, HelperError> {
+        let publicKeyResult = await ABCMpc.public_key_with_chain_code(key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, chain_code: chainCode, path: path, password: password)
         guard case .success(let publicKeyResponse) = publicKeyResult else {
             if case .failure(let error) = publicKeyResult {
                 return .failure(HelperError.mpcError(error))
@@ -345,8 +347,8 @@ public class WaasHelper {
         return .success(response)
     }
     
-    public func validateShare(encryptedShare: String, secretStore: String) async -> Result<ValidateShareAndSecretStoreResponse, HelperError> {
-        let result = await ABCMpc.validate_share_and_secret_store(encrypted_share: encryptedShare,secret_store: secretStore)
+    public func validateShare(encryptedShare: String, secretStore: String, password: String) async -> Result<ValidateShareAndSecretStoreResponse, HelperError> {
+        let result = await ABCMpc.validate_share_and_secret_store(encrypted_share: encryptedShare, secret_store: secretStore, password: password)
         guard case .success(let response) = result else {
             if case .failure(let error) = result {
                 return .failure(HelperError.mpcError(error))
