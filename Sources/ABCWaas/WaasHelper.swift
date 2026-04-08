@@ -23,11 +23,13 @@ public class WaasHelper {
 
     private var node1BaseURL: String
     private var node2BaseURL: String
+    private var keyShareStorage: KeyShareStorage?
 
-    public init(waasClient: WaasClient, node1BaseURL: String, node2BaseURL: String) {
+    public init(waasClient: WaasClient, node1BaseURL: String, node2BaseURL: String, keyShareStorage: KeyShareStorage? = nil) {
         self.waasClient = waasClient
         self.node1BaseURL = node1BaseURL
         self.node2BaseURL = node2BaseURL
+        self.keyShareStorage = keyShareStorage
     }
 
     public func generateKeyShare(accessToken: String, curve: String, password: String) async -> Result<GenerateShareResponse, HelperError> {
@@ -116,6 +118,60 @@ public class WaasHelper {
         
         // 7. 성공 처리
         return .success(generateShareResponse)
+    }
+
+    /// 키쉐어를 생성하고 로컬 보안 저장소에 자동 저장합니다.
+    /// KeyShareStorage가 설정되어 있어야 합니다.
+    public func generateAndStoreKeyShare(accessToken: String, curve: String, password: String) async -> Result<GenerateShareResponse, HelperError> {
+        guard let storage = keyShareStorage else {
+            return .failure(.unknownError("KeyShareStorage is not initialized"))
+        }
+
+        let result = await generateKeyShare(accessToken: accessToken, curve: curve, password: password)
+        if case .success(let response) = result {
+            storage.store(StoredKeyShare(
+                keyId: response.keyId,
+                encryptedShare: response.encryptedShare,
+                secretStore: response.secretStore,
+                curve: response.curve
+            ))
+        }
+        return result
+    }
+
+    /// 키쉐어를 복구하고 로컬 보안 저장소에 자동 저장합니다.
+    /// KeyShareStorage가 설정되어 있어야 합니다.
+    public func recoverAndStoreKeyShare(accessToken: String, curve: String, password: String) async -> Result<RecoverShareResponse, HelperError> {
+        guard let storage = keyShareStorage else {
+            return .failure(.unknownError("KeyShareStorage is not initialized"))
+        }
+
+        let result = await recoverKeyShare(accessToken: accessToken, curve: curve, password: password)
+        if case .success(let response) = result {
+            storage.store(StoredKeyShare(
+                keyId: response.keyId,
+                encryptedShare: response.encryptedShare,
+                secretStore: response.secretStore,
+                curve: response.curve
+            ))
+        }
+        return result
+    }
+
+    /// 로컬 보안 저장소에서 키쉐어를 조회합니다.
+    public func getStoredKeyShare(curve: String) -> StoredKeyShare? {
+        return keyShareStorage?.get(curve: curve)
+    }
+
+    /// 로컬 보안 저장소에서 키쉐어를 삭제합니다.
+    @discardableResult
+    public func deleteStoredKeyShare(curve: String) -> Bool {
+        return keyShareStorage?.delete(curve: curve) ?? false
+    }
+
+    /// 로컬 보안 저장소에서 모든 키쉐어를 삭제합니다.
+    public func clearStoredKeyShares() {
+        keyShareStorage?.clear()
     }
 
     public func recoverKeyShare(accessToken: String, curve: String, password: String) async -> Result<RecoverShareResponse, HelperError> {
@@ -321,6 +377,38 @@ public class WaasHelper {
         }
 
         return .success(signResponse)
+    }
+
+    /// 저장된 키쉐어를 사용하여 서명합니다.
+    public func signWithStoredKeyShare(accessToken: String, curve: String, message: String, password: String) async -> Result<SignResponse, HelperError> {
+        guard let stored = keyShareStorage?.get(curve: curve) else {
+            return .failure(.unknownError("No stored key share found for curve: \(curve)"))
+        }
+        return await sign(accessToken: accessToken, keyId: stored.keyId, encryptedShare: stored.encryptedShare, secretStore: stored.secretStore, curve: curve, message: message, password: password)
+    }
+
+    /// 저장된 키쉐어를 사용하여 MTA 서명합니다.
+    public func signMtaWithStoredKeyShare(accessToken: String, curve: String, message: String, password: String) async -> Result<SignResponse, HelperError> {
+        guard let stored = keyShareStorage?.get(curve: curve) else {
+            return .failure(.unknownError("No stored key share found for curve: \(curve)"))
+        }
+        return await signMta(accessToken: accessToken, keyId: stored.keyId, encryptedShare: stored.encryptedShare, secretStore: stored.secretStore, message: message, password: password)
+    }
+
+    /// 저장된 키쉐어를 사용하여 MTA 파생 서명합니다.
+    public func signMtaDerivedWithStoredKeyShare(accessToken: String, curve: String, message: String, chainCode: String, path: String, password: String) async -> Result<SignResponse, HelperError> {
+        guard let stored = keyShareStorage?.get(curve: curve) else {
+            return .failure(.unknownError("No stored key share found for curve: \(curve)"))
+        }
+        return await signMtaDerived(accessToken: accessToken, keyId: stored.keyId, encryptedShare: stored.encryptedShare, secretStore: stored.secretStore, message: message, chainCode: chainCode, path: path, password: password)
+    }
+
+    /// 저장된 키쉐어를 사용하여 체인코드 파생 서명합니다.
+    public func signWithChainCodeWithStoredKeyShare(accessToken: String, curve: String, message: String, chainCode: String, path: String, password: String) async -> Result<SignResponse, HelperError> {
+        guard let stored = keyShareStorage?.get(curve: curve) else {
+            return .failure(.unknownError("No stored key share found for curve: \(curve)"))
+        }
+        return await signWithChainCode(accessToken: accessToken, keyId: stored.keyId, encryptedShare: stored.encryptedShare, secretStore: stored.secretStore, curve: curve, message: message, chainCode: chainCode, path: path, password: password)
     }
 
     public func publicKeyWithChainCode(keyId: String, encryptedShare: String, secretStore: String, curve: String, chainCode: String, path: String, password: String) async -> Result<PublicKeyResponse, HelperError> {
