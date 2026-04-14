@@ -292,8 +292,13 @@ public class WaasHelper {
             return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
         }
 
-        // 2. 서명
-        let signResult = await ABCMpc.sign(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, message: message, password: password)
+        // 2. 서명 (secp256k1은 자동으로 MTA 서명 사용)
+        let signResult: Result<SignResponse, MpcError>
+        if curve == "secp256k1" {
+            signResult = await ABCMpc.sign_mta(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message, password: password)
+        } else {
+            signResult = await ABCMpc.sign(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, message: message, password: password)
+        }
         guard case .success(let signResponse) = signResult else {
             if case .failure(let error) = signResult {
                 return .failure(HelperError.mpcError(error))
