@@ -72,8 +72,9 @@ public class WaasHelper {
         let generateShareResult = await generate_share(
             node_1_url: self.node1BaseURL,
             node_2_url: self.node2BaseURL,
+            auth_token: accessToken,
+            mpc_token: walletTokenResponse.token,
             key_id: keyIdResponse.result,
-            token: walletTokenResponse.token,
             curve: curve,
             password: password
         )
@@ -230,7 +231,8 @@ public class WaasHelper {
         let reoverShareResult = await recover_share(
             node_1_url: self.node1BaseURL,
             node_2_url: self.node2BaseURL,
-            token: walletTokenResponse.token,
+            auth_token: accessToken,
+            mpc_token: walletTokenResponse.token,
             target_key_id: keyIdResponse.result,
             source_key_id: source_key_id,
             curve: curve,
@@ -295,9 +297,9 @@ public class WaasHelper {
         // 2. 서명 (secp256k1은 자동으로 MTA 서명 사용)
         let signResult: Result<SignResponse, MpcError>
         if curve == "secp256k1" {
-            signResult = await ABCMpc.sign_mta(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message, password: password)
+            signResult = await ABCMpc.sign_mta(node_1_url: self.node1BaseURL, auth_token: accessToken, mpc_token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message, password: password)
         } else {
-            signResult = await ABCMpc.sign(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, message: message, password: password)
+            signResult = await ABCMpc.sign(node_1_url: self.node1BaseURL, auth_token: accessToken, mpc_token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, message: message, password: password)
         }
         guard case .success(let signResponse) = signResult else {
             if case .failure(let error) = signResult {
@@ -323,7 +325,7 @@ public class WaasHelper {
         }
 
         // 2. MTA 서명
-        let signResult = await ABCMpc.sign_mta(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message, password: password)
+        let signResult = await ABCMpc.sign_mta(node_1_url: self.node1BaseURL, auth_token: accessToken, mpc_token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message, password: password)
         guard case .success(let signResponse) = signResult else {
             if case .failure(let error) = signResult {
                 return .failure(HelperError.mpcError(error))
@@ -348,7 +350,7 @@ public class WaasHelper {
         }
 
         // 2. MTA 파생 서명
-        let signResult = await ABCMpc.sign_mta_derived(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message, chain_code: chainCode, path: path, password: password)
+        let signResult = await ABCMpc.sign_mta_derived(node_1_url: self.node1BaseURL, auth_token: accessToken, mpc_token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message, chain_code: chainCode, path: path, password: password)
         guard case .success(let signResponse) = signResult else {
             if case .failure(let error) = signResult {
                 return .failure(HelperError.mpcError(error))
@@ -375,9 +377,9 @@ public class WaasHelper {
         // 2. 체인코드 파생 서명 (secp256k1은 자동으로 MTA 파생 서명 사용)
         let signResult: Result<SignResponse, MpcError>
         if curve == "secp256k1" {
-            signResult = await ABCMpc.sign_mta_derived(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message, chain_code: chainCode, path: path, password: password)
+            signResult = await ABCMpc.sign_mta_derived(node_1_url: self.node1BaseURL, auth_token: accessToken, mpc_token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, message: message, chain_code: chainCode, path: path, password: password)
         } else {
-            signResult = await ABCMpc.sign_with_chain_code(node_1_url: self.node1BaseURL, token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, message: message, chain_code: chainCode, path: path, password: password)
+            signResult = await ABCMpc.sign_with_chain_code(node_1_url: self.node1BaseURL, auth_token: accessToken, mpc_token: walletTokenResponse.token, key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, message: message, chain_code: chainCode, path: path, password: password)
         }
         guard case .success(let signResponse) = signResult else {
             if case .failure(let error) = signResult {
