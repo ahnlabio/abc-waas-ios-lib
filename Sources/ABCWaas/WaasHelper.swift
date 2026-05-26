@@ -338,6 +338,7 @@ public class WaasHelper {
         return .success(signResponse)
     }
 
+    /* 파생(HD chain code) 서명 — WaaS 레벨 미노출 (0.1.33부터). ABCMpc 저수준에는 존재.
     public func signMtaDerived(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, message: String, chainCode: String, path: String, password: String? = nil) async -> Result<SignResponse, HelperError> {
         // 1. 지갑 토큰 가져오기
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
@@ -392,6 +393,7 @@ public class WaasHelper {
 
         return .success(signResponse)
     }
+    */
 
     /// 저장된 키쉐어를 사용하여 서명합니다.
     public func signWithStoredKeyShare(accessToken: String, curve: String, message: String, password: String? = nil) async -> Result<SignResponse, HelperError> {
@@ -409,6 +411,7 @@ public class WaasHelper {
         return await signMta(accessToken: accessToken, keyId: stored.keyId, encryptedShare: stored.encryptedShare, secretStore: stored.secretStore, message: message, password: password)
     }
 
+    /* 파생 stored 서명 — WaaS 레벨 미노출 (0.1.33부터).
     /// 저장된 키쉐어를 사용하여 MTA 파생 서명합니다.
     public func signMtaDerivedWithStoredKeyShare(accessToken: String, curve: String, message: String, chainCode: String, path: String, password: String? = nil) async -> Result<SignResponse, HelperError> {
         guard let stored = keyShareStorage?.get(curve: curve) else {
@@ -424,7 +427,9 @@ public class WaasHelper {
         }
         return await signWithChainCode(accessToken: accessToken, keyId: stored.keyId, encryptedShare: stored.encryptedShare, secretStore: stored.secretStore, curve: curve, message: message, chainCode: chainCode, path: path, password: password)
     }
+    */
 
+    /* publicKeyWithChainCode — WaaS 레벨 미노출 (0.1.33부터). ABCMpc 저수준에는 존재.
     public func publicKeyWithChainCode(keyId: String, encryptedShare: String, secretStore: String, curve: String, chainCode: String, path: String, password: String? = nil) async -> Result<PublicKeyResponse, HelperError> {
         let publicKeyResult = await ABCMpc.public_key_with_chain_code(key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, chain_code: chainCode, path: path, password: password)
         guard case .success(let publicKeyResponse) = publicKeyResult else {
@@ -436,6 +441,7 @@ public class WaasHelper {
 
         return .success(publicKeyResponse)
     }
+    */
 
     public func validatePassword(password: String? = nil, secretStore: String) async -> Result<ValidatePasswordAndSecretStoreResponse, HelperError> {
         let result = await ABCMpc.validate_password_and_secret_store(password: password, secret_store:secretStore)
