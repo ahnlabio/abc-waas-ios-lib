@@ -32,7 +32,7 @@ public class WaasHelper {
         self.keyShareStorage = keyShareStorage
     }
 
-    public func generateKeyShare(accessToken: String, curve: String, password: String) async -> Result<GenerateShareResponse, HelperError> {
+    public func generateKeyShare(accessToken: String, curve: String, password: String? = nil, version: SecretStoreVersion = .v2) async -> Result<GenerateShareResponse, HelperError> {
         // 1. User 키 존재 확인
         let userKeyResult = await waasClient?.getV3WalletKey(accessToken: accessToken)
         guard case .success(let walletKeyResponse) = userKeyResult else {
@@ -76,9 +76,10 @@ public class WaasHelper {
             mpc_token: walletTokenResponse.token,
             key_id: keyIdResponse.result,
             curve: curve,
-            password: password
+            password: password,
+            version: version
         )
-        
+
         guard case .success(let generateShareResponse) = generateShareResult else {
             if case .failure(let error) = generateShareResult {
                 return .failure(HelperError.mpcError(error))
@@ -123,12 +124,12 @@ public class WaasHelper {
 
     /// 키쉐어를 생성하고 로컬 보안 저장소에 자동 저장합니다.
     /// KeyShareStorage가 설정되어 있어야 합니다.
-    public func generateAndStoreKeyShare(accessToken: String, curve: String, password: String) async -> Result<GenerateShareResponse, HelperError> {
+    public func generateAndStoreKeyShare(accessToken: String, curve: String, password: String? = nil, version: SecretStoreVersion = .v2) async -> Result<GenerateShareResponse, HelperError> {
         guard let storage = keyShareStorage else {
             return .failure(.unknownError("KeyShareStorage is not initialized"))
         }
 
-        let result = await generateKeyShare(accessToken: accessToken, curve: curve, password: password)
+        let result = await generateKeyShare(accessToken: accessToken, curve: curve, password: password, version: version)
         if case .success(let response) = result {
             storage.store(StoredKeyShare(
                 keyId: response.keyId,
@@ -142,12 +143,12 @@ public class WaasHelper {
 
     /// 키쉐어를 복구하고 로컬 보안 저장소에 자동 저장합니다.
     /// KeyShareStorage가 설정되어 있어야 합니다.
-    public func recoverAndStoreKeyShare(accessToken: String, curve: String, password: String) async -> Result<RecoverShareResponse, HelperError> {
+    public func recoverAndStoreKeyShare(accessToken: String, curve: String, password: String? = nil, version: SecretStoreVersion = .v2) async -> Result<RecoverShareResponse, HelperError> {
         guard let storage = keyShareStorage else {
             return .failure(.unknownError("KeyShareStorage is not initialized"))
         }
 
-        let result = await recoverKeyShare(accessToken: accessToken, curve: curve, password: password)
+        let result = await recoverKeyShare(accessToken: accessToken, curve: curve, password: password, version: version)
         if case .success(let response) = result {
             storage.store(StoredKeyShare(
                 keyId: response.keyId,
@@ -175,7 +176,7 @@ public class WaasHelper {
         keyShareStorage?.clear()
     }
 
-    public func recoverKeyShare(accessToken: String, curve: String, password: String) async -> Result<RecoverShareResponse, HelperError> {
+    public func recoverKeyShare(accessToken: String, curve: String, password: String? = nil, version: SecretStoreVersion = .v2) async -> Result<RecoverShareResponse, HelperError> {
         // 1. User 키 존재 확인
         let userKeyResult = await waasClient?.getV3WalletKey(accessToken: accessToken)
         guard case .success(let walletKeyResponse) = userKeyResult else {
@@ -236,9 +237,10 @@ public class WaasHelper {
             target_key_id: keyIdResponse.result,
             source_key_id: source_key_id,
             curve: curve,
-            password: password
+            password: password,
+            version: version
         )
-        
+
         guard case .success(let recoverShareResponse) = reoverShareResult else {
             if case .failure(let error) = reoverShareResult {
                 return .failure(HelperError.mpcError(error))
@@ -281,7 +283,7 @@ public class WaasHelper {
         return .success(recoverShareResponse)
     }
 
-    public func sign(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, curve: String, message: String, password: String) async -> Result<SignResponse, HelperError> {
+    public func sign(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, curve: String, message: String, password: String? = nil) async -> Result<SignResponse, HelperError> {
         // 1. 지갑 토큰 가져오기
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
             return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
@@ -311,7 +313,7 @@ public class WaasHelper {
         return .success(signResponse)
     }
 
-    public func signMta(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, message: String, password: String) async -> Result<SignResponse, HelperError> {
+    public func signMta(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, message: String, password: String? = nil) async -> Result<SignResponse, HelperError> {
         // 1. 지갑 토큰 가져오기
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
             return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
@@ -336,7 +338,7 @@ public class WaasHelper {
         return .success(signResponse)
     }
 
-    public func signMtaDerived(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, message: String, chainCode: String, path: String, password: String) async -> Result<SignResponse, HelperError> {
+    public func signMtaDerived(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, message: String, chainCode: String, path: String, password: String? = nil) async -> Result<SignResponse, HelperError> {
         // 1. 지갑 토큰 가져오기
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
             return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
@@ -361,7 +363,7 @@ public class WaasHelper {
         return .success(signResponse)
     }
 
-    public func signWithChainCode(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, curve: String, message: String, chainCode: String, path: String, password: String) async -> Result<SignResponse, HelperError> {
+    public func signWithChainCode(accessToken: String, keyId: String, encryptedShare: String, secretStore: String, curve: String, message: String, chainCode: String, path: String, password: String? = nil) async -> Result<SignResponse, HelperError> {
         // 1. 지갑 토큰 가져오기
         guard let tokenResult = await waasClient?.getV3WalletToken(accessToken: accessToken, id: keyId) else {
             return .failure(HelperError.unknownError("Wallet Data Fetch Failed"))
@@ -392,7 +394,7 @@ public class WaasHelper {
     }
 
     /// 저장된 키쉐어를 사용하여 서명합니다.
-    public func signWithStoredKeyShare(accessToken: String, curve: String, message: String, password: String) async -> Result<SignResponse, HelperError> {
+    public func signWithStoredKeyShare(accessToken: String, curve: String, message: String, password: String? = nil) async -> Result<SignResponse, HelperError> {
         guard let stored = keyShareStorage?.get(curve: curve) else {
             return .failure(.unknownError("No stored key share found for curve: \(curve)"))
         }
@@ -400,7 +402,7 @@ public class WaasHelper {
     }
 
     /// 저장된 키쉐어를 사용하여 MTA 서명합니다.
-    public func signMtaWithStoredKeyShare(accessToken: String, curve: String, message: String, password: String) async -> Result<SignResponse, HelperError> {
+    public func signMtaWithStoredKeyShare(accessToken: String, curve: String, message: String, password: String? = nil) async -> Result<SignResponse, HelperError> {
         guard let stored = keyShareStorage?.get(curve: curve) else {
             return .failure(.unknownError("No stored key share found for curve: \(curve)"))
         }
@@ -408,7 +410,7 @@ public class WaasHelper {
     }
 
     /// 저장된 키쉐어를 사용하여 MTA 파생 서명합니다.
-    public func signMtaDerivedWithStoredKeyShare(accessToken: String, curve: String, message: String, chainCode: String, path: String, password: String) async -> Result<SignResponse, HelperError> {
+    public func signMtaDerivedWithStoredKeyShare(accessToken: String, curve: String, message: String, chainCode: String, path: String, password: String? = nil) async -> Result<SignResponse, HelperError> {
         guard let stored = keyShareStorage?.get(curve: curve) else {
             return .failure(.unknownError("No stored key share found for curve: \(curve)"))
         }
@@ -416,14 +418,14 @@ public class WaasHelper {
     }
 
     /// 저장된 키쉐어를 사용하여 체인코드 파생 서명합니다.
-    public func signWithChainCodeWithStoredKeyShare(accessToken: String, curve: String, message: String, chainCode: String, path: String, password: String) async -> Result<SignResponse, HelperError> {
+    public func signWithChainCodeWithStoredKeyShare(accessToken: String, curve: String, message: String, chainCode: String, path: String, password: String? = nil) async -> Result<SignResponse, HelperError> {
         guard let stored = keyShareStorage?.get(curve: curve) else {
             return .failure(.unknownError("No stored key share found for curve: \(curve)"))
         }
         return await signWithChainCode(accessToken: accessToken, keyId: stored.keyId, encryptedShare: stored.encryptedShare, secretStore: stored.secretStore, curve: curve, message: message, chainCode: chainCode, path: path, password: password)
     }
 
-    public func publicKeyWithChainCode(keyId: String, encryptedShare: String, secretStore: String, curve: String, chainCode: String, path: String, password: String) async -> Result<PublicKeyResponse, HelperError> {
+    public func publicKeyWithChainCode(keyId: String, encryptedShare: String, secretStore: String, curve: String, chainCode: String, path: String, password: String? = nil) async -> Result<PublicKeyResponse, HelperError> {
         let publicKeyResult = await ABCMpc.public_key_with_chain_code(key_id: keyId, encrypted_share: encryptedShare, secret_store: secretStore, curve: curve, chain_code: chainCode, path: path, password: password)
         guard case .success(let publicKeyResponse) = publicKeyResult else {
             if case .failure(let error) = publicKeyResult {
@@ -435,7 +437,7 @@ public class WaasHelper {
         return .success(publicKeyResponse)
     }
 
-    public func validatePassword(password: String, secretStore: String) async -> Result<ValidatePasswordAndSecretStoreResponse, HelperError> {
+    public func validatePassword(password: String? = nil, secretStore: String) async -> Result<ValidatePasswordAndSecretStoreResponse, HelperError> {
         let result = await ABCMpc.validate_password_and_secret_store(password: password, secret_store:secretStore)
         guard case .success(let response) = result else {
             if case .failure(let error) = result {
@@ -447,7 +449,7 @@ public class WaasHelper {
         return .success(response)
     }
     
-    public func validateShare(encryptedShare: String, secretStore: String, password: String) async -> Result<ValidateShareAndSecretStoreResponse, HelperError> {
+    public func validateShare(encryptedShare: String, secretStore: String, password: String? = nil) async -> Result<ValidateShareAndSecretStoreResponse, HelperError> {
         let result = await ABCMpc.validate_share_and_secret_store(encrypted_share: encryptedShare, secret_store: secretStore, password: password)
         guard case .success(let response) = result else {
             if case .failure(let error) = result {
@@ -455,8 +457,24 @@ public class WaasHelper {
             }
             return .failure(HelperError.unknownError("Share Validation Failed"))
         }
-        
+
         return .success(response)
+    }
+
+    /// 저장된 키쉐어의 secret_store 에 대해 password 를 검증.
+    public func validatePasswordWithStoredKeyShare(curve: String, password: String? = nil) async -> Result<ValidatePasswordAndSecretStoreResponse, HelperError> {
+        guard let stored = keyShareStorage?.get(curve: curve) else {
+            return .failure(HelperError.unknownError("No stored key share found for curve: \(curve)"))
+        }
+        return await validatePassword(password: password, secretStore: stored.secretStore)
+    }
+
+    /// 저장된 키쉐어의 encrypted_share/secret_store 정합성 검증.
+    public func validateShareWithStoredKeyShare(curve: String, password: String? = nil) async -> Result<ValidateShareAndSecretStoreResponse, HelperError> {
+        guard let stored = keyShareStorage?.get(curve: curve) else {
+            return .failure(HelperError.unknownError("No stored key share found for curve: \(curve)"))
+        }
+        return await validateShare(encryptedShare: stored.encryptedShare, secretStore: stored.secretStore, password: password)
     }
 
     // 1. 중복 키 확인 (키가 이미 존재하면 에러 반환)
